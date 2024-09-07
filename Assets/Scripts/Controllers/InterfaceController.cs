@@ -6,12 +6,19 @@ using UnityEngine.UI;
 
 public class InterfaceController : SingletonBehaviour<InterfaceController>
 {
-    [Header("Player stats objects")]
+    [Header("Player manager stats objects")]
     [SerializeField] Slider hungrySlider;
     [SerializeField] Slider thirstSlider;
     [SerializeField] Slider dirtySlider;
     [SerializeField] TextMeshProUGUI currencyManagerCount;
+    [SerializeField] TextMeshProUGUI speedPrice;
+    [SerializeField] TextMeshProUGUI lifePrice;
+
+    [Header("Player manager stats objects")]
     [SerializeField] TextMeshProUGUI currencyGameCount;
+    [SerializeField] TextMeshProUGUI speedInGame;
+    [SerializeField] Slider lifeSlider;
+    [SerializeField] Slider timeSlider;
 
     #region Update Max Values
     public void UpdateMaxHungry(float hungry)
@@ -57,6 +64,16 @@ public class InterfaceController : SingletonBehaviour<InterfaceController>
     public void UpdateDirty(float dirty)
     {
         dirtySlider.value = dirty;
+    }
+
+    public void UpdateSpeedPrice(int price)
+    {
+        speedPrice.text = price.ToString();
+    }
+
+    public void UpdateLifePrice(int price)
+    {
+        lifePrice.text = price.ToString();
     }
     #endregion
 }
