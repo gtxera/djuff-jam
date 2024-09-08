@@ -13,6 +13,8 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
     public event Action RunnerGameOver;
 
+    public event Action RunnerWin;
+
     private float _acceleration;
 
     [SerializeField] private float _defaultDuration = 4f;
@@ -21,9 +23,9 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
     [SerializeField, Min(0)] private float _spawnRange;
     [SerializeField] private float _spawnX;
 
-    [SerializeField] private Asteroid _asteroidPrefab;
-    [SerializeField] private Coin _coinPrefab;
-    [SerializeField] private TimePickup _timePickupPrefab;
+    [SerializeField] private Asteroid[] _asteroidPrefab;
+    [SerializeField] private Coin[] _coinPrefab;
+    [SerializeField] private TimePickup[] _timePickupPrefab;
 
     [SerializeField] private float _asteroidSpawnInterval;
     [SerializeField] private float _asteroidSpawnDeviation;
@@ -35,6 +37,10 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
     [SerializeField] private float _timePickupSpawnDeviation;
 
     [SerializeField] private float _hitInvulnerabilityTime;
+
+    [SerializeField] private float _victoryVelocity;
+    [SerializeField] private float _distortionScale;
+    [SerializeField] private GameObject _distortionRoot;
 
     private bool _hitRecently;
     private float _lastHitTime;
@@ -49,12 +55,20 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
     private bool _running;
 
+    private float _initialCameraSize;
+    private float _velocityDifference;
+    private float _currentDistortion = 1f;
+
     private void Start()
     {
-        _asteroidSpawner = new Spawner(_asteroidPrefab.gameObject, _asteroidSpawnInterval, _asteroidSpawnDeviation);
-        _coinSpawner = new Spawner(_coinPrefab.gameObject, _coinSpawnInterval, _coinSpawnDeviation);
-        _timePickupSpawner = new Spawner(_timePickupPrefab.gameObject, _timePickupSpawnInterval, _timePickupSpawnDeviation);
-        
+        _asteroidSpawner = new Spawner(_asteroidPrefab, _asteroidSpawnInterval, _asteroidSpawnDeviation);
+        _coinSpawner = new Spawner(_coinPrefab, _coinSpawnInterval, _coinSpawnDeviation);
+        _timePickupSpawner = new Spawner(_timePickupPrefab, _timePickupSpawnInterval, _timePickupSpawnDeviation);
+
+        _initialCameraSize = Camera.main.orthographicSize;
+
+        _velocityDifference = _victoryVelocity - _initialVelocity;
+
         StartGame();
     }
 
@@ -72,6 +86,7 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
         _acceleration = 1f;
         _lifes = 3;
+        _currentDistortion = 1f;
 
         if (StatsController.Instance is null)
             return;
@@ -137,11 +152,30 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
             }
         }
 
+        var ease = Mathf.InverseLerp(_initialVelocity, _victoryVelocity, Velocity);
+
+        _currentDistortion = Mathf.Lerp(1f, _distortionScale, ease * ease * ease);
+
+        var scale = _distortionRoot.transform.localScale;
+        scale.x = _currentDistortion;
+        _distortionRoot.transform.localScale = scale;
+
+        Camera.main.orthographicSize = _initialCameraSize * _currentDistortion;
+
+        Physics2D.SyncTransforms();
+
         _remaningTime -= dt;
 
         if (_remaningTime <= 0)
         {
             GameOver();
+        }
+
+
+        if (Velocity >= _victoryVelocity)
+        {
+            RunnerWin?.Invoke();
+            _running = false;
         }
     }
 
@@ -157,23 +191,32 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
     private void SpawnObject(GameObject prefab)
     {
-        var spawnPos = new Vector2(_spawnX, Random.Range(-_spawnRange, _spawnRange));
+        var collider = prefab.GetComponent<Collider2D>();
+        Vector2 spawnPos;
 
-        Instantiate(prefab, (Vector3)spawnPos, Quaternion.identity);
+        do
+        {
+            var cameraSize = Camera.main.orthographicSize;
+
+            spawnPos = new Vector2(_spawnX, Random.Range(-cameraSize + 0.1f, cameraSize - 0.1f));
+
+        } while (Physics2D.OverlapBox(spawnPos, (Vector2)collider.bounds.size, 0f));
+
+        Instantiate(prefab, (Vector3)spawnPos, Quaternion.identity, _distortionRoot.transform);
     }
 
     private class Spawner
     {
-        private GameObject _prefab;
+        private MovingObject[] _prefabs;
         private float _spawnInterval;
         private float _spawnDeviation;
 
         private float _elapsedTime;
         private float _currentInterval;
 
-        public Spawner(GameObject prefab, float spawnInterval, float spawnDeviation)
+        public Spawner(MovingObject[] prefabs, float spawnInterval, float spawnDeviation)
         {
-            _prefab = prefab;
+            _prefabs = prefabs;
             _spawnInterval = spawnInterval;
             _spawnDeviation = spawnDeviation;
         }
@@ -190,7 +233,7 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
             if (_elapsedTime >= _currentInterval)
             {
-                RunnerManager.Instance.SpawnObject(_prefab);
+                RunnerManager.Instance.SpawnObject(_prefabs[Random.Range(0, _prefabs.Length)].gameObject);
                 Reset();
             }
         }

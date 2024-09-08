@@ -18,6 +18,7 @@ public class RunnerController : MonoBehaviour
         _rb2d = GetComponent<Rigidbody2D>();
         RunnerManager.Instance.RunnerStarted += OnRunnerStarted;
         RunnerManager.Instance.RunnerGameOver += OnRunnerEnded;
+        RunnerManager.Instance.RunnerWin += OnRunnerEnded;
         _running = true;
     }
 
@@ -25,6 +26,7 @@ public class RunnerController : MonoBehaviour
     {
         RunnerManager.Instance.RunnerStarted -= OnRunnerStarted;
         RunnerManager.Instance.RunnerGameOver -= OnRunnerEnded;
+        RunnerManager.Instance.RunnerWin -= OnRunnerEnded;
     }
 
     private void OnRunnerStarted()

@@ -13,11 +13,13 @@ public abstract class MovingObject : MonoBehaviour
     {
         _rb2d = GetComponent<Rigidbody2D>();
         RunnerManager.Instance.RunnerGameOver += OnRunnerGameOver;
+        RunnerManager.Instance.RunnerWin += OnRunnerGameOver;
     }
 
     private void OnDestroy()
     {
         RunnerManager.Instance.RunnerGameOver -= OnRunnerGameOver;
+        RunnerManager.Instance.RunnerWin -= OnRunnerGameOver;
     }
 
     private void Update()
