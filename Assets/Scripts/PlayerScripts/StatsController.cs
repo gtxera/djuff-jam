@@ -9,13 +9,13 @@ public class StatsController : SingletonBehaviour<StatsController>
 {
     [Header("Player Stats")]
     [SerializeField] int currentCurrency;
-    [SerializeField] float maxHungry;
-    [SerializeField] float maxThirst;
-    [SerializeField] int currentDirty;
+    public float maxHungry;
+    public float maxThirst;
+    public int currentDirty;
     public float extraSpeed;
-    public float extraLife;
+    public int extraLife;
     [SerializeField] float[] extraSpeedValues;
-    [SerializeField] float[] extraLifeValues;
+    [SerializeField] int[] extraLifeValues;
     [HideInInspector] public float hungry;
     [HideInInspector] public float thirst;
 
