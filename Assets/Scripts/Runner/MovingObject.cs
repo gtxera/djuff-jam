@@ -14,12 +14,14 @@ public abstract class MovingObject : MonoBehaviour
         _rb2d = GetComponent<Rigidbody2D>();
         RunnerManager.Instance.RunnerGameOver += OnRunnerGameOver;
         RunnerManager.Instance.RunnerWin += OnRunnerGameOver;
+        RunnerManager.Instance.RunnerLeave += OnRunnerLeave;
     }
 
     private void OnDestroy()
     {
         RunnerManager.Instance.RunnerGameOver -= OnRunnerGameOver;
         RunnerManager.Instance.RunnerWin -= OnRunnerGameOver;
+        RunnerManager.Instance.RunnerLeave -= OnRunnerLeave;
     }
 
     private void Update()
@@ -31,7 +33,7 @@ public abstract class MovingObject : MonoBehaviour
         velocity.x = -RunnerManager.Instance.Velocity;
         _rb2d.velocity = velocity;
 
-        if (_rb2d.position.x < -20f)
+        if (_rb2d.position.x < -100f)
             Destroy(gameObject);
     }
 
@@ -39,6 +41,11 @@ public abstract class MovingObject : MonoBehaviour
     {
         _rb2d.velocity = Vector2.zero;
         _running = false;
+    }
+
+    private void OnRunnerLeave()
+    {
+        Destroy(gameObject);
     }
 
     public abstract void Collide();

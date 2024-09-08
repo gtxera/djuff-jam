@@ -12,6 +12,7 @@ public enum PlayerStates
 public class PlayerController : SingletonBehaviour<PlayerController>
 {
     public SpriteRenderer playerSprite;
+    public string playerName;
     public PlayerStates states;
 
     [Header("Runner Stats")]

@@ -6,8 +6,7 @@ public class Coin : MovingObject
 {
     public override void Collide()
     {
-        /*StatsController.Instance.CurrencyGain(1);
-        InterfaceController.Instance.UpdateGameCurrency(1);*/
+        RunnerManager.Instance.GainCoin();
         Destroy(gameObject);
     }
 }

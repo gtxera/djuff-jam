@@ -16,6 +16,7 @@ public class Dialogue : MonoBehaviour
     [SerializeField] float typeDelay;
     int dialogueIndex;
 
+
     public void StartDialogue()
     {
         dialoguePanel.SetActive(true);
@@ -41,7 +42,10 @@ public class Dialogue : MonoBehaviour
 
     IEnumerator TypeText()
     {
-        dialogueText.text = dialogues[dialogueIndex];
+        var currentDialogue = dialogues[dialogueIndex];
+        currentDialogue = currentDialogue.Replace("NOME", PlayerController.Instance.playerName);
+
+        dialogueText.text = currentDialogue;
         dialogueText.maxVisibleCharacters = 0;
         for (int i = 0; i <= dialogueText.text.Length; i++)
         {

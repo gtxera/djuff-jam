@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.01.00">
+	<object class="AudioFile" id="{8f9c807d-e3aa-4d7f-b135-da2d30cd3986}">
+		<property name="assetPath">
+			<value>MUSIC/Runner/Trilha Runner - Transition 2.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>2</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{07114661-0b68-4161-a711-2b292cffa8ff}</destination>
+		</relationship>
+	</object>
+</objects>

@@ -1,4 +1,5 @@
 using UnityEngine.InputSystem;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -11,33 +12,57 @@ public class RunnerController : MonoBehaviour
     [SerializeField] private float _shipRadius;
     [SerializeField] private Vector2 _centerOffset;
 
+    [SerializeField] private SpriteRenderer _sprite;
+    [SerializeField] private Animator _animator;
+
     private bool _running;
 
-    private void Start()
+    private Vector2 _initialPosition;
+
+
+    private IEnumerator Start()
     {
+        while (RunnerManager.Instance is null)
+            yield return null;
+
         _rb2d = GetComponent<Rigidbody2D>();
         RunnerManager.Instance.RunnerStarted += OnRunnerStarted;
         RunnerManager.Instance.RunnerGameOver += OnRunnerEnded;
-        RunnerManager.Instance.RunnerWin += OnRunnerEnded;
+        RunnerManager.Instance.RunnerWin += OnRunnerWin;
+        _sprite.color = PlayerController.Instance.playerSprite.color;
         _running = true;
+        _initialPosition = _rb2d.position;
     }
 
     private void OnDestroy()
     {
         RunnerManager.Instance.RunnerStarted -= OnRunnerStarted;
         RunnerManager.Instance.RunnerGameOver -= OnRunnerEnded;
-        RunnerManager.Instance.RunnerWin -= OnRunnerEnded;
+        RunnerManager.Instance.RunnerWin -= OnRunnerWin;
     }
 
     private void OnRunnerStarted()
     {
         _running = true;
-        Debug.Log("running");
+        _sprite.color = PlayerController.Instance.playerSprite.color;
+        _animator.speed = 1f;
     }
 
     private void OnRunnerEnded()
     {
         _running = false;
+        _animator.speed = 0f;
+    }
+
+    private void OnRunnerWin()
+    {
+        _running = false;
+        _animator.Play("GameWin");
+    }
+    
+    private void OnRunnerLeave()
+    {
+        _rb2d.MovePosition(_initialPosition);
     }
 
     private void FixedUpdate()

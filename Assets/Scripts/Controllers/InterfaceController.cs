@@ -38,6 +38,19 @@ public class InterfaceController : SingletonBehaviour<InterfaceController>
         dirtySlider.maxValue = dirty;
         dirtySlider.value = dirty;
     }
+
+    public void UpdateMaxGameLife(int maxLife)
+    {
+        lifeSlider.maxValue = maxLife;
+        lifeSlider.value = maxLife;
+    }
+
+    public void UpdateMaxGameTime(float maxTime)
+    {
+        timeSlider.maxValue = maxTime;
+        timeSlider.value = maxTime;
+    }
+
     #endregion
 
     #region Update Current Values
@@ -63,17 +76,35 @@ public class InterfaceController : SingletonBehaviour<InterfaceController>
 
     public void UpdateDirty(float dirty)
     {
-        dirtySlider.value = dirty;
+        dirtySlider.value = 3 - dirty;
     }
 
     public void UpdateSpeedPrice(int price)
     {
         speedPrice.text = price.ToString();
+        Debug.Log("aqui");
     }
 
     public void UpdateLifePrice(int price)
     {
         lifePrice.text = price.ToString();
+    }
+
+    public void UpdateGameLife(int life)
+    {
+        lifeSlider.value = life;
+    }
+
+    public void UpdateGameTime(float time)
+    {
+        timeSlider.value = time;
+    }
+
+    public void UpdateGameSpeed(float percentage)
+    {
+        const float LIGHT_SPEED = 299_792_458;
+        var currentSpeed = Mathf.Lerp(100, LIGHT_SPEED, percentage);
+        speedInGame.text = $"Velocidade: {currentSpeed} m/s";
     }
     #endregion
 }

@@ -8,13 +8,21 @@ public class HamsterScript : MonoBehaviour
 {
     [SerializeField] TMP_InputField hamsterNameInput;
     string currentHamsterType;
+    public string CurrentHamsterType => currentHamsterType;
     string hamsterName;
+    public string HamsterName => hamsterName;
     [SerializeField] Dialogue dialogue;
     [SerializeField] GameObject warningPopup;
 
+    [SerializeField] private bool _resetPrefs;
     // Start is called before the first frame update
     void Start()
     {
+        if (_resetPrefs)
+        {
+            PlayerPrefs.DeleteAll();
+        }
+
         if (PlayerPrefs.HasKey("HamsterName"))
         {
             currentHamsterType = PlayerPrefs.GetString("HamsterType");
@@ -24,6 +32,11 @@ public class HamsterScript : MonoBehaviour
             if (ColorUtility.TryParseHtmlString(currentHamsterType, out color))
             {
                 PlayerController.Instance.playerSprite.color = color;
+            }
+
+            if (!string.IsNullOrEmpty(hamsterName))
+            {
+                PlayerController.Instance.playerName = hamsterName;
             }
 
             MenuController.Instance.SwitchScreen((int)MenuController.Screens.managerScreen);
@@ -48,6 +61,7 @@ public class HamsterScript : MonoBehaviour
         }
 
         hamsterName = hamsterNameInput.text;
+        PlayerController.Instance.playerName = hamsterName;
 
         Color color;
         if (ColorUtility.TryParseHtmlString(currentHamsterType, out color))

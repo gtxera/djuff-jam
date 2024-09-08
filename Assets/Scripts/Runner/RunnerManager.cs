@@ -15,13 +15,12 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
     public event Action RunnerWin;
 
+    public event Action RunnerLeave;
+
     private float _acceleration;
 
     [SerializeField] private float _defaultDuration = 4f;
     [SerializeField] private float _initialVelocity;
-
-    [SerializeField, Min(0)] private float _spawnRange;
-    [SerializeField] private float _spawnX;
 
     [SerializeField] private Asteroid[] _asteroidPrefab;
     [SerializeField] private Coin[] _coinPrefab;
@@ -42,6 +41,9 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
     [SerializeField] private float _distortionScale;
     [SerializeField] private GameObject _distortionRoot;
 
+    [SerializeField] private GameObject _managerRoot;
+    [SerializeField] private GameObject _gameOverScreen;
+
     private bool _hitRecently;
     private float _lastHitTime;
 
@@ -52,52 +54,80 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
     private float _remaningTime;
 
     private int _lifes;
+    private int _maxLifes;
 
     private bool _running;
 
     private float _initialCameraSize;
+    private float _targetCameraSize;
     private float _velocityDifference;
     private float _currentDistortion = 1f;
 
-    private void Start()
+    private int _currencyCollected;
+
+    protected override void Awake()
     {
+        base.Awake();
+
+        gameObject.SetActive(false);
+
         _asteroidSpawner = new Spawner(_asteroidPrefab, _asteroidSpawnInterval, _asteroidSpawnDeviation);
         _coinSpawner = new Spawner(_coinPrefab, _coinSpawnInterval, _coinSpawnDeviation);
         _timePickupSpawner = new Spawner(_timePickupPrefab, _timePickupSpawnInterval, _timePickupSpawnDeviation);
 
         _initialCameraSize = Camera.main.orthographicSize;
+        _targetCameraSize = (_initialCameraSize * _distortionScale + _initialCameraSize) / 2;
 
         _velocityDifference = _victoryVelocity - _initialVelocity;
+    }
+
+    public void GoToRunner()
+    {
+        _managerRoot.SetActive(false);
+        gameObject.SetActive(true);
+
+        MenuController.Instance.SwitchScreen((int)MenuController.Screens.gameScreen);
+
+        _currencyCollected = 0;
+        InterfaceController.Instance.UpdateGameCurrency(0);
+
+        _maxLifes = 1;
+
+        _maxLifes += StatsController.Instance.extraLife;
+        InterfaceController.Instance.UpdateMaxGameLife(_maxLifes);
+
+        _lifes = _maxLifes;
+        InterfaceController.Instance.UpdateGameLife(_lifes);
+
+        _remaningTime = _defaultDuration;
+
+        _remaningTime += GetExtraDuration(StatsController.Instance.hungry / StatsController.Instance.maxHungry);
+        _remaningTime += GetExtraDuration(StatsController.Instance.thirst / StatsController.Instance.maxThirst);
+        _remaningTime += GetExtraDuration((3 - StatsController.Instance.currentDirty) / 3);
+
+        InterfaceController.Instance.UpdateGameTime(_remaningTime);
 
         StartGame();
     }
 
-    public void StartGame()
+    private void StartGame()
     {
         _running = true;
 
-        RunnerStarted?.Invoke();
+        Velocity = _initialVelocity;
 
-        _remaningTime = _defaultDuration;
+        RunnerStarted?.Invoke();
 
         _asteroidSpawner.Reset();
         _coinSpawner.Reset();
         _timePickupSpawner.Reset();
 
-        _acceleration = 1f;
-        _lifes = 3;
         _currentDistortion = 1f;
 
         if (StatsController.Instance is null)
             return;
 
-        _remaningTime += GetExtraDuration(StatsController.Instance.hungry);
-        _remaningTime += GetExtraDuration(StatsController.Instance.thirst);
-        _remaningTime += GetExtraDuration(StatsController.Instance.currentDirty);
-
         _acceleration = StatsController.Instance.extraSpeed;
-
-        _lifes = StatsController.Instance.extraLife;
     }
 
     public void GameOver()
@@ -105,11 +135,29 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         RunnerGameOver?.Invoke();
 
         _running = false;
+
+        _gameOverScreen.SetActive(true);
     }
 
     public void GainTime(float time)
     {
-        _remaningTime += time;
+        if (_remaningTime < 15f)
+            _remaningTime = Mathf.Clamp(_remaningTime + time, 0, 15);
+    }
+
+    public void GainCoin()
+    {
+        _currencyCollected += 1;
+        InterfaceController.Instance.UpdateGameCurrency(_currencyCollected);
+    }
+
+    public void GainLife()
+    {
+        if (_lifes < _maxLifes)
+        {
+            _lifes += 1;
+            InterfaceController.Instance.UpdateGameLife(_lifes);
+        }
     }
 
     public void Collide()
@@ -120,12 +168,33 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         Velocity -= Velocity * 0.15f;
         _lifes -= 1;
 
+        InterfaceController.Instance.UpdateGameLife(_lifes);
+
         _hitRecently = true;
 
         if (_lifes <= 0)
         {
             GameOver();
         }
+    }
+
+    public void LeaveRunner()
+    {
+        RunnerLeave?.Invoke();
+
+        MenuController.Instance.SwitchScreen((int)MenuController.Screens.managerScreen);
+        gameObject.SetActive(false);
+        _managerRoot.SetActive(true);
+        _distortionRoot.transform.localScale = Vector3.one;
+
+        StatsController.Instance.SpawnPoop();
+        StatsController.Instance.thirst -= 20;
+        StatsController.Instance.hungry -= 20;
+        InterfaceController.Instance.UpdateThirst(StatsController.Instance.thirst);
+        InterfaceController.Instance.UpdateHungry(StatsController.Instance.hungry);
+
+        StatsController.Instance.CurrencyGain(_currencyCollected);
+        InterfaceController.Instance.UpdateManagerCurrency(StatsController.Instance.CurrentCurrency);
     }
 
     private void Update()
@@ -152,15 +221,15 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
             }
         }
 
-        var ease = Mathf.InverseLerp(_initialVelocity, _victoryVelocity, Velocity);
+        var velocityPercent = Mathf.InverseLerp(_initialVelocity, _victoryVelocity, Velocity);
 
-        _currentDistortion = Mathf.Lerp(1f, _distortionScale, ease * ease * ease);
+        float lighspeedEase = velocityPercent;
+        for (int i = 0; i < 10; i++)
+        {
+            lighspeedEase *= velocityPercent;
+        }
 
-        var scale = _distortionRoot.transform.localScale;
-        scale.x = _currentDistortion;
-        _distortionRoot.transform.localScale = scale;
-
-        Camera.main.orthographicSize = _initialCameraSize * _currentDistortion;
+        InterfaceController.Instance.UpdateGameSpeed(lighspeedEase);
 
         Physics2D.SyncTransforms();
 
@@ -171,6 +240,9 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
             GameOver();
         }
 
+        InterfaceController.Instance.UpdateGameTime(_remaningTime);
+
+        Debug.Log(Velocity);
 
         if (Velocity >= _victoryVelocity)
         {
@@ -194,13 +266,17 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         var collider = prefab.GetComponent<Collider2D>();
         Vector2 spawnPos;
 
+        int attempts = 0;
+
         do
         {
             var cameraSize = Camera.main.orthographicSize;
 
-            spawnPos = new Vector2(_spawnX, Random.Range(-cameraSize + 0.1f, cameraSize - 0.1f));
+            spawnPos = new Vector2(cameraSize * 2f * Camera.main.aspect + 3f, Random.Range(-cameraSize + 0.1f, cameraSize - 0.1f));
 
-        } while (Physics2D.OverlapBox(spawnPos, (Vector2)collider.bounds.size, 0f));
+            attempts += 1;
+
+        } while (Physics2D.OverlapBox(spawnPos, (Vector2)collider.bounds.size, 0f) && attempts <= 100);
 
         Instantiate(prefab, (Vector3)spawnPos, Quaternion.identity, _distortionRoot.transform);
     }

@@ -14,7 +14,7 @@ public class PoopSell : MonoBehaviour
     public void Sell()
     {
         StatsController.Instance.CurrencyGain(poopPrice);
-        StatsController.Instance.PoopUpdateCount(30);
+        StatsController.Instance.RemovePoop();
         Destroy(gameObject);
     }
 }

@@ -22,7 +22,7 @@ public class StatsController : SingletonBehaviour<StatsController>
     [Header("Prices")]
     [SerializeField] int foodPrice;
     [SerializeField] int waterPrice;
-    [SerializeField] int[] speedUpgradePrices; 
+    [SerializeField] int[] speedUpgradePrices;
     [SerializeField] int[] lifeUpgradePrices;
     int speedUpgradeIndex = 0;
     int lifeUpgradeIndex = 0;
@@ -43,6 +43,8 @@ public class StatsController : SingletonBehaviour<StatsController>
     [SerializeField] Transform poopParent;
     [SerializeField] float spawnRadio;
 
+    public int CurrentCurrency => currentCurrency;
+
     private void Start()
     {
 
@@ -52,29 +54,39 @@ public class StatsController : SingletonBehaviour<StatsController>
             hungry = PlayerPrefs.GetFloat("Hungry");
             thirst = PlayerPrefs.GetFloat("Thirst");
             currentDirty = PlayerPrefs.GetInt("Dirty");
-            SpawnPoop(currentDirty / 30);
+            SetupPoop(currentDirty);
             speedUpgradeIndex = PlayerPrefs.GetInt("SpeedIndex");
             lifeUpgradeIndex = PlayerPrefs.GetInt("LifeIndex");
-            SetSpeed(true);
-            SetLife(true);
+            extraLife = extraLifeValues[lifeUpgradeIndex];
+            extraSpeed = extraSpeedValues[speedUpgradeIndex];
+
+            InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
+            InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
         }
         else
         {
             hungry = maxHungry;
             thirst = maxThirst;
+            currentDirty = 0;
+
+            PlayerPrefs.SetFloat("Hungry", hungry);
+            PlayerPrefs.SetFloat("Thirst", thirst);
+            PlayerPrefs.SetInt("Dirty", currentDirty);
+
+            SetLife(true);
+            SetSpeed(true);
         }
 
-        InterfaceController.Instance.UpdateMaxDirty(currentDirty);
+
+        InterfaceController.Instance.UpdateMaxDirty(3);
+        InterfaceController.Instance.UpdateDirty(currentDirty);
         InterfaceController.Instance.UpdateMaxHungry(maxHungry);
         InterfaceController.Instance.UpdateHungry(hungry);
         InterfaceController.Instance.UpdateMaxThirst(maxThirst);
         InterfaceController.Instance.UpdateThirst(thirst);
         InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
-    }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space)) SpawnPoop(3);
+        ActiveDesactiveButtons();
     }
 
     #region Stats Control
@@ -86,7 +98,8 @@ public class StatsController : SingletonBehaviour<StatsController>
         currentDirty = 0;
         lifeUpgradeIndex = 0;
         speedUpgradeIndex = 0;
-        InterfaceController.Instance.UpdateMaxDirty(currentDirty);
+        InterfaceController.Instance.UpdateMaxDirty(3);
+        InterfaceController.Instance.UpdateDirty(poopCount);
         InterfaceController.Instance.UpdateMaxHungry(maxHungry);
         InterfaceController.Instance.UpdateHungry(hungry);
         InterfaceController.Instance.UpdateMaxThirst(maxThirst);
@@ -134,17 +147,17 @@ public class StatsController : SingletonBehaviour<StatsController>
 
     void SetSpeed(bool isFirstTime)
     {
-        extraSpeed = extraSpeedValues[speedUpgradeIndex];
-        if (speedUpgradeIndex > speedUpgradePrices.Length)
+        extraSpeed = extraSpeedValues[isFirstTime ? 0 : speedUpgradeIndex];
+        if (speedUpgradeIndex + 1 >= speedUpgradePrices.Length)
         {
             speedUpgradeBtn.interactable = false;
             InterfaceController.Instance.UpdateSpeedPrice(0);
         }
         else
         {
-            if (!isFirstTime) speedUpgradeIndex++;
+            speedUpgradeIndex++;
+            InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
         }
-        InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
     }
 
     public void UpgradeLife()
@@ -161,17 +174,17 @@ public class StatsController : SingletonBehaviour<StatsController>
 
     void SetLife(bool isFirstTime)
     {
-        extraLife = extraLifeValues[lifeUpgradeIndex];
-        if (lifeUpgradeIndex > lifeUpgradePrices.Length)
+        extraLife = extraLifeValues[isFirstTime ? 0 : lifeUpgradeIndex];
+        if (lifeUpgradeIndex + 1 >= lifeUpgradePrices.Length)
         {
             lifeUpgradeBtn.interactable = false;
             InterfaceController.Instance.UpdateLifePrice(0);
         }
         else
         {
-            if (!isFirstTime) lifeUpgradeIndex++;
+            lifeUpgradeIndex++;
+            InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
         }
-        InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
     }
     #endregion
 
@@ -191,11 +204,11 @@ public class StatsController : SingletonBehaviour<StatsController>
         practiceBtn.interactable = false;
     }
 
-    public void SpawnPoop(int _poopCount)
+    public void SpawnPoop()
     {
         if (poopCount == 3) return;
 
-        int definitivePoopCount = Mathf.Min(_poopCount, 3);
+        int definitivePoopCount = Random.Range(1, 3 - poopCount);
         for (int i = 0; i < definitivePoopCount; i++)
         {
             if (poopCount < 3)
@@ -205,13 +218,26 @@ public class StatsController : SingletonBehaviour<StatsController>
                 poopCount++;
             }
         }
-        PoopUpdateCount(-poopCount * 30);
+        PoopUpdateCount(poopCount);
     }
 
-   /* private void OnDrawGizmos()
+    private void SetupPoop(int poopAmount)
     {
-        Gizmos.DrawWireSphere(poopParent.transform.position, spawnRadio);
-    }*/
+        for (int i = 0; i < poopAmount; i++)
+        {
+            if (poopCount < 3)
+            {
+                Vector2 randomPos = Random.insideUnitCircle * spawnRadio;
+                Instantiate(poop, randomPos, Quaternion.identity, poopParent);
+                poopCount++;
+            }
+        }
+    }
+
+    /* private void OnDrawGizmos()
+     {
+         Gizmos.DrawWireSphere(poopParent.transform.position, spawnRadio);
+     }*/
     #endregion
 
     #region UI Control
@@ -241,9 +267,18 @@ public class StatsController : SingletonBehaviour<StatsController>
 
     public void PoopUpdateCount(int count)
     {
-        currentDirty += count;
+        currentDirty = count;
         InterfaceController.Instance.UpdateDirty(currentDirty);
         PlayerPrefs.SetInt("Dirty", currentDirty);
     }
+
+    public void RemovePoop()
+    {
+        currentDirty -= 1;
+        poopCount = currentDirty;
+        InterfaceController.Instance.UpdateDirty(currentDirty);
+        PlayerPrefs.SetInt("Dirty", currentDirty);
+    }
+
     #endregion
 }
