@@ -33,7 +33,7 @@ public class Dialogue : MonoBehaviour
         }
     }
 
-    private void FinishDialogue()
+    public void FinishDialogue()
     {
         dialogueBtn.SetActive(false);
         dialoguePanel.SetActive(false);

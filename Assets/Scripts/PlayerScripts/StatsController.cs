@@ -78,6 +78,24 @@ public class StatsController : SingletonBehaviour<StatsController>
     }
 
     #region Stats Control
+    public void RestartStats()
+    {
+        currentCurrency = 10;
+        hungry = maxHungry;
+        thirst = maxThirst;
+        currentDirty = 0;
+        lifeUpgradeIndex = 0;
+        speedUpgradeIndex = 0;
+        InterfaceController.Instance.UpdateMaxDirty(currentDirty);
+        InterfaceController.Instance.UpdateMaxHungry(maxHungry);
+        InterfaceController.Instance.UpdateHungry(hungry);
+        InterfaceController.Instance.UpdateMaxThirst(maxThirst);
+        InterfaceController.Instance.UpdateThirst(thirst);
+        InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
+        extraLife = 0;
+        extraSpeed = 0;
+    }
+
     public void DrinkWater(float statsQuantity)
     {
         if (thirst == maxThirst) return;
@@ -116,7 +134,6 @@ public class StatsController : SingletonBehaviour<StatsController>
 
     void SetSpeed(bool isFirstTime)
     {
-        InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
         extraSpeed = extraSpeedValues[speedUpgradeIndex];
         if (speedUpgradeIndex > speedUpgradePrices.Length)
         {
@@ -127,6 +144,7 @@ public class StatsController : SingletonBehaviour<StatsController>
         {
             if (!isFirstTime) speedUpgradeIndex++;
         }
+        InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
     }
 
     public void UpgradeLife()
@@ -144,7 +162,6 @@ public class StatsController : SingletonBehaviour<StatsController>
     void SetLife(bool isFirstTime)
     {
         extraLife = extraLifeValues[lifeUpgradeIndex];
-        InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
         if (lifeUpgradeIndex > lifeUpgradePrices.Length)
         {
             lifeUpgradeBtn.interactable = false;
@@ -154,6 +171,7 @@ public class StatsController : SingletonBehaviour<StatsController>
         {
             if (!isFirstTime) lifeUpgradeIndex++;
         }
+        InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
     }
     #endregion
 
