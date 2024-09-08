@@ -10,6 +10,7 @@ public class HamsterScript : MonoBehaviour
     string currentHamsterType;
     string hamsterName;
     [SerializeField] Dialogue dialogue;
+    [SerializeField] GameObject warningPopup;
 
     // Start is called before the first frame update
     void Start()
@@ -24,6 +25,12 @@ public class HamsterScript : MonoBehaviour
             {
                 PlayerController.Instance.playerSprite.color = color;
             }
+
+            MenuController.Instance.SwitchScreen((int)MenuController.Screens.managerScreen);
+        }
+        else
+        {
+            MenuController.Instance.SwitchScreen((int)MenuController.Screens.menuScreen);
         }
     }
 
@@ -34,7 +41,11 @@ public class HamsterScript : MonoBehaviour
 
     public void ConfirmSelection()
     {
-        if (string.IsNullOrEmpty(hamsterNameInput.text)) return;
+        if (string.IsNullOrEmpty(hamsterNameInput.text))
+        {
+            warningPopup.SetActive(true);
+            return;
+        }
 
         hamsterName = hamsterNameInput.text;
 

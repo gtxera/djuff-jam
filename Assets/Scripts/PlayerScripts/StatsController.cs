@@ -38,18 +38,37 @@ public class StatsController : SingletonBehaviour<StatsController>
     [SerializeField] Button foodBtn;
     [SerializeField] Button practiceBtn;
     bool hasTrained;
+    int poopCount;
     [SerializeField] GameObject poop;
     [SerializeField] Transform poopParent;
     [SerializeField] float spawnRadio;
 
     private void Start()
     {
-        hungry = maxHungry;
-        thirst = maxThirst;
+
+        if (PlayerPrefs.HasKey("Currency"))
+        {
+            currentCurrency = PlayerPrefs.GetInt("Currency");
+            hungry = PlayerPrefs.GetFloat("Hungry");
+            thirst = PlayerPrefs.GetFloat("Thirst");
+            currentDirty = PlayerPrefs.GetInt("Dirty");
+            SpawnPoop(currentDirty / 30);
+            speedUpgradeIndex = PlayerPrefs.GetInt("SpeedIndex");
+            lifeUpgradeIndex = PlayerPrefs.GetInt("LifeIndex");
+            SetSpeed(true);
+            SetLife(true);
+        }
+        else
+        {
+            hungry = maxHungry;
+            thirst = maxThirst;
+        }
 
         InterfaceController.Instance.UpdateMaxDirty(currentDirty);
         InterfaceController.Instance.UpdateMaxHungry(maxHungry);
+        InterfaceController.Instance.UpdateHungry(hungry);
         InterfaceController.Instance.UpdateMaxThirst(maxThirst);
+        InterfaceController.Instance.UpdateThirst(thirst);
         InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
     }
 
@@ -67,6 +86,8 @@ public class StatsController : SingletonBehaviour<StatsController>
         currentCurrency -= waterPrice;
         InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
         ActiveDesactiveButtons();
+        PlayerPrefs.SetFloat("Thirst", thirst);
+        PlayerPrefs.SetInt("Currency", currentCurrency);
     }
 
     public void EatFood(float statsQuantity)
@@ -77,6 +98,8 @@ public class StatsController : SingletonBehaviour<StatsController>
         currentCurrency -= foodPrice;
         InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
         ActiveDesactiveButtons();
+        PlayerPrefs.SetFloat("Hungry", hungry);
+        PlayerPrefs.SetInt("Currency", currentCurrency);
     }
 
     public void UpgradeSpeed()
@@ -84,16 +107,26 @@ public class StatsController : SingletonBehaviour<StatsController>
         if (speedUpgradePrices[speedUpgradeIndex] > currentCurrency) return;
 
         currentCurrency -= speedUpgradePrices[speedUpgradeIndex];
+        SetSpeed(false);
+
+        PlayerPrefs.SetInt("SpeedIndex", speedUpgradeIndex);
+        PlayerPrefs.SetInt("Currency", currentCurrency);
+        InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
+    }
+
+    void SetSpeed(bool isFirstTime)
+    {
+        InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
         extraSpeed = extraSpeedValues[speedUpgradeIndex];
-        speedUpgradeIndex++;
         if (speedUpgradeIndex > speedUpgradePrices.Length)
         {
             speedUpgradeBtn.interactable = false;
             InterfaceController.Instance.UpdateSpeedPrice(0);
         }
-        else InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
-
-        InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
+        else
+        {
+            if (!isFirstTime) speedUpgradeIndex++;
+        }
     }
 
     public void UpgradeLife()
@@ -101,16 +134,26 @@ public class StatsController : SingletonBehaviour<StatsController>
         if (lifeUpgradePrices[lifeUpgradeIndex] > currentCurrency) return;
 
         currentCurrency -= lifeUpgradePrices[lifeUpgradeIndex];
+        SetLife(false);
+
+        PlayerPrefs.SetInt("LifeIndex", lifeUpgradeIndex);
+        PlayerPrefs.SetInt("Currency", currentCurrency);
+        InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
+    }
+
+    void SetLife(bool isFirstTime)
+    {
         extraLife = extraLifeValues[lifeUpgradeIndex];
-        lifeUpgradeIndex++;
+        InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
         if (lifeUpgradeIndex > lifeUpgradePrices.Length)
         {
             lifeUpgradeBtn.interactable = false;
             InterfaceController.Instance.UpdateLifePrice(0);
         }
-        else InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
-
-        InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
+        else
+        {
+            if (!isFirstTime) lifeUpgradeIndex++;
+        }
     }
     #endregion
 
@@ -120,6 +163,7 @@ public class StatsController : SingletonBehaviour<StatsController>
         currentCurrency += currencyCount;
         InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
         ActiveDesactiveButtons();
+        PlayerPrefs.SetInt("Currency", currentCurrency);
     }
 
     public void Practice()
@@ -129,13 +173,19 @@ public class StatsController : SingletonBehaviour<StatsController>
         practiceBtn.interactable = false;
     }
 
-    public void SpawnPoop(int poopCount)
+    public void SpawnPoop(int _poopCount)
     {
-        int definitivePoopCount = Mathf.Min(poopCount, 3);
+        if (poopCount == 3) return;
+
+        int definitivePoopCount = Mathf.Min(_poopCount, 3);
         for (int i = 0; i < definitivePoopCount; i++)
         {
-            Vector2 randomPos = Random.insideUnitCircle * spawnRadio;
-            var _poop = Instantiate(poop, randomPos, Quaternion.identity, poopParent);
+            if (poopCount < 3)
+            {
+                Vector2 randomPos = Random.insideUnitCircle * spawnRadio;
+                Instantiate(poop, randomPos, Quaternion.identity, poopParent);
+                poopCount++;
+            }
         }
         PoopUpdateCount(-poopCount * 30);
     }
@@ -163,14 +213,19 @@ public class StatsController : SingletonBehaviour<StatsController>
         {
             managerOptions[i].interactable = btnsIsActive;
         }
-        /*ActiveDesactiveButtons();
-        if (hasTrained) practiceBtn.interactable = false;*/
+
+        if (btnsIsActive)
+        {
+            ActiveDesactiveButtons();
+            if (hasTrained) practiceBtn.interactable = false;
+        }
     }
 
     public void PoopUpdateCount(int count)
     {
         currentDirty += count;
         InterfaceController.Instance.UpdateDirty(currentDirty);
+        PlayerPrefs.SetInt("Dirty", currentDirty);
     }
     #endregion
 }
