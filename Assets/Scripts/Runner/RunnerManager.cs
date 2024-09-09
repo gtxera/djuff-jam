@@ -200,8 +200,10 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         _distortionRoot.transform.localScale = Vector3.one;
 
         StatsController.Instance.SpawnPoop();
-        StatsController.Instance.thirst -= 20;
-        StatsController.Instance.hungry -= 20;
+        StatsController.Instance.thirst *= 0.75f;
+        StatsController.Instance.hungry *= 0.75f;
+        PlayerPrefs.SetFloat("Thirst", StatsController.Instance.thirst);
+        PlayerPrefs.SetFloat("Hungry", StatsController.Instance.hungry);
         InterfaceController.Instance.UpdateThirst(StatsController.Instance.thirst);
         InterfaceController.Instance.UpdateHungry(StatsController.Instance.hungry);
 
@@ -248,7 +250,7 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         }
 
         float lighspeedEase = velocityPercent;
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 5; i++)
         {
             lighspeedEase *= velocityPercent;
         }

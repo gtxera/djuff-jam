@@ -36,6 +36,7 @@ public class HamsterScript : MonoBehaviour
             if (ColorUtility.TryParseHtmlString(currentHamsterType, out color))
             {
                 PlayerController.Instance.playerSprite.color = color;
+                PlayerController.Instance.ColorSet?.Invoke();
             }
 
             if (!string.IsNullOrEmpty(hamsterName))
@@ -74,6 +75,7 @@ public class HamsterScript : MonoBehaviour
         if (ColorUtility.TryParseHtmlString(currentHamsterType, out color))
         {
             PlayerController.Instance.playerSprite.color = color;
+            PlayerController.Instance.ColorSet?.Invoke();
         }
 
         PlayerPrefs.SetString("HamsterName", hamsterName);

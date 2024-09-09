@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Rendering;
 using UnityEngine;
+
+using Random = UnityEngine.Random;
 
 public enum PlayerStates
 {
@@ -25,6 +28,8 @@ public class PlayerController : SingletonBehaviour<PlayerController>
     [SerializeField] GameObject[] eyes;
     public int eyesIndex;
 
+    public  Action ColorSet;
+
     private void Start()
     {
         StartAnimRandomizing();
@@ -37,18 +42,14 @@ public class PlayerController : SingletonBehaviour<PlayerController>
 
     public void Dissapear()
     {
-        var color = playerSprite.color;
-        color.a = 0f;
-        playerSprite.color = color;
+        playerSprite.gameObject.SetActive(false);
 
         hamsterAnim.speed = 0f;
     }
 
     public void Reappear()
     {
-        var color = playerSprite.color;
-        color.a = 1f;
-        playerSprite.color = color;
+        playerSprite.gameObject.SetActive(true);
 
         hamsterAnim.speed = 1f;
     }

@@ -13,13 +13,13 @@ public class AudioController : MonoBehaviour
         _sfxSlider.onValueChanged.AddListener((value) =>
         {
             var bus = FMODUnity.RuntimeManager.GetBus("bus:/SFX");
-            bus.setVolume(Mathf.Lerp(-80f, 10f, value));
+            bus.setVolume(Mathf.Lerp(0f, 10f, value));
         });
 
         _musicSlider.onValueChanged.AddListener((value) =>
         {
             var bus = FMODUnity.RuntimeManager.GetBus("bus:/Music");
-            bus.setVolume(Mathf.Lerp(-80f, 10f, value));
+            bus.setVolume(Mathf.Lerp(0f, 1f, value));
         });
     }
 }

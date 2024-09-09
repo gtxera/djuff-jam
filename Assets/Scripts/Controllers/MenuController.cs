@@ -58,8 +58,7 @@ public class MenuController : SingletonBehaviour<MenuController>
     public void NewGame()
     {
         PlayerPrefs.DeleteAll();
-        SwitchScreen((int)Screens.menuScreen);
-        StatsController.Instance.RestartStats();
+        Application.Quit();
     }
 
     public void ExitGame()

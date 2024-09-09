@@ -94,15 +94,28 @@ public class StatsController : SingletonBehaviour<StatsController>
             extraLife = extraLifeValues[lifeUpgradeIndex];
             extraSpeed = extraSpeedValues[speedUpgradeIndex];
 
-            InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
-            InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
+            if (speedUpgradeIndex < extraLifeValues.Length - 1)
+                InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex + 1]);
+            else
+            {
+                speedUpgradeBtn.interactable = false;
+                InterfaceController.Instance.UpdateSpeedPrice(0);
+            }
+
+            if (lifeUpgradeIndex < extraSpeedValues.Length - 1)
+                InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
+            else
+            {
+                lifeUpgradeBtn.interactable = false;
+                InterfaceController.Instance.UpdateLifePrice(0);
+            }
 
             PlayManagerMusic();
         }
         else
         {
-            hungry = maxHungry;
-            thirst = maxThirst;
+            hungry = maxHungry / 2;
+            thirst = maxThirst / 2;
             currentDirty = 0;
 
             PlayerPrefs.SetFloat("Hungry", hungry);
@@ -251,6 +264,7 @@ public class StatsController : SingletonBehaviour<StatsController>
         {
             speedUpgradeBtn.interactable = false;
             InterfaceController.Instance.UpdateSpeedPrice(0);
+            speedUpgradeIndex = speedUpgradePrices.Length - 1;
         }
         else
         {
@@ -283,6 +297,7 @@ public class StatsController : SingletonBehaviour<StatsController>
         {
             lifeUpgradeBtn.interactable = false;
             InterfaceController.Instance.UpdateLifePrice(0);
+            lifeUpgradeIndex = lifeUpgradePrices.Length - 1;
         }
         else
         {
@@ -312,6 +327,7 @@ public class StatsController : SingletonBehaviour<StatsController>
 
         _doingStuff = true;
         ActiveDesactiveButtons();
+        PlayerController.Instance.Dissapear();
         StartCoroutine(PracticeRoutine());
     }
 
