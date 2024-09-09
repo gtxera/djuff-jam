@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.01.00">
+<objects serializationModel="Studio.02.02.00">
 	<object class="Event" id="{810cb9d6-1360-4569-b0d3-29157de4aa29}">
 		<property name="name">
 			<value>DayCare</value>
@@ -77,8 +77,8 @@
 	</object>
 	<object class="Timeline" id="{ce148086-49f8-4bd6-a2b7-0727f17ec026}">
 		<relationship name="modules">
-			<destination>{aee3c186-84a6-4570-9b4e-edb50da9f6df}</destination>
 			<destination>{a2891b6e-3806-428a-ae96-5757b570db82}</destination>
+			<destination>{aee3c186-84a6-4570-9b4e-edb50da9f6df}</destination>
 		</relationship>
 		<relationship name="markers">
 			<destination>{e47fc5a6-e8d1-4f22-ac9f-82dfa2b9a2cd}</destination>

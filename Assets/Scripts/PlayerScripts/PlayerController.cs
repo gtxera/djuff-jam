@@ -35,6 +35,24 @@ public class PlayerController : SingletonBehaviour<PlayerController>
         StartCoroutine(ChangeAnimation());
     }
 
+    public void Dissapear()
+    {
+        var color = playerSprite.color;
+        color.a = 0f;
+        playerSprite.color = color;
+
+        hamsterAnim.speed = 0f;
+    }
+
+    public void Reappear()
+    {
+        var color = playerSprite.color;
+        color.a = 1f;
+        playerSprite.color = color;
+
+        hamsterAnim.speed = 1f;
+    }
+
     IEnumerator ChangeAnimation()
     {
         switch (states)

@@ -14,7 +14,11 @@ public class HamsterScript : MonoBehaviour
     [SerializeField] Dialogue dialogue;
     [SerializeField] GameObject warningPopup;
 
+    [SerializeField] private FMODUnity.EventReference _menuMusic;
+
     [SerializeField] private bool _resetPrefs;
+
+    private FMOD.Studio.EventInstance _musicInstance;
     // Start is called before the first frame update
     void Start()
     {
@@ -44,6 +48,8 @@ public class HamsterScript : MonoBehaviour
         else
         {
             MenuController.Instance.SwitchScreen((int)MenuController.Screens.menuScreen);
+            _musicInstance = FMODUnity.RuntimeManager.CreateInstance(_menuMusic);
+            _musicInstance.start();
         }
     }
 
@@ -62,6 +68,7 @@ public class HamsterScript : MonoBehaviour
 
         hamsterName = hamsterNameInput.text;
         PlayerController.Instance.playerName = hamsterName;
+        _musicInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
 
         Color color;
         if (ColorUtility.TryParseHtmlString(currentHamsterType, out color))
@@ -73,6 +80,7 @@ public class HamsterScript : MonoBehaviour
         PlayerPrefs.SetString("HamsterType", currentHamsterType);
 
         MenuController.Instance.SwitchScreen((int)MenuController.Screens.managerScreen);
+        StatsController.Instance.PlayManagerMusic();
         dialogue.StartDialogue();
     }
 }

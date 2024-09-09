@@ -44,6 +44,10 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
     [SerializeField] private GameObject _managerRoot;
     [SerializeField] private GameObject _gameOverScreen;
 
+    [SerializeField] private FMODUnity.EventReference _runnerMusic;
+
+    private FMOD.Studio.EventInstance _runnerMusicInstance;
+
     private bool _hitRecently;
     private float _lastHitTime;
 
@@ -65,6 +69,8 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
     private int _currencyCollected;
 
+    private int _currentMusicPhase;
+
     protected override void Awake()
     {
         base.Awake();
@@ -79,6 +85,8 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         _targetCameraSize = (_initialCameraSize * _distortionScale + _initialCameraSize) / 2;
 
         _velocityDifference = _victoryVelocity - _initialVelocity;
+
+        _runnerMusicInstance = FMODUnity.RuntimeManager.CreateInstance(_runnerMusic);
     }
 
     public void GoToRunner()
@@ -107,6 +115,8 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
         InterfaceController.Instance.UpdateGameTime(_remaningTime);
 
+        StatsController.Instance.StopManagerMusic();
+
         StartGame();
     }
 
@@ -123,6 +133,8 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         _timePickupSpawner.Reset();
 
         _currentDistortion = 1f;
+
+        _runnerMusicInstance.start();
 
         if (StatsController.Instance is null)
             return;
@@ -195,6 +207,10 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
 
         StatsController.Instance.CurrencyGain(_currencyCollected);
         InterfaceController.Instance.UpdateManagerCurrency(StatsController.Instance.CurrentCurrency);
+
+        StatsController.Instance.PlayManagerMusic();
+        StatsController.Instance.hasTrained = false;
+        _runnerMusicInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
     }
 
     private void Update()
@@ -222,6 +238,14 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         }
 
         var velocityPercent = Mathf.InverseLerp(_initialVelocity, _victoryVelocity, Velocity);
+
+        var phase = Mathf.Floor(velocityPercent / (1 / 3f));
+
+        if (phase != _currentMusicPhase)
+        {
+            _runnerMusicInstance.setParameterByName("RunnerStage", phase);
+            _currentMusicPhase = (int)phase;
+        }
 
         float lighspeedEase = velocityPercent;
         for (int i = 0; i < 10; i++)

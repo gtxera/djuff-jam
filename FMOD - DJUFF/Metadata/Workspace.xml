@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.01.00">
+<objects serializationModel="Studio.02.02.00">
 	<object class="Workspace" id="{710f6c40-fcce-4b18-8f7a-c5bf42698817}">
 		<property name="builtBanksOutputDirectory">
 			<value>Builds</value>

@@ -126,6 +126,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 805f32b013ae01e42b7aefebe01675a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _pickupSound:
+    Guid:
+      Data1: -2076804651
+      Data2: 1194750221
+      Data3: -1966299498
+      Data4: 1656726572
+    Path: event:/SFX/Runner/Coin
 --- !u!58 &6453102049169770474
 CircleCollider2D:
   m_ObjectHideFlags: 0

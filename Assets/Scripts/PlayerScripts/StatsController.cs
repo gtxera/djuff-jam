@@ -37,16 +37,50 @@ public class StatsController : SingletonBehaviour<StatsController>
     [SerializeField] Button waterBtn;
     [SerializeField] Button foodBtn;
     [SerializeField] Button practiceBtn;
-    bool hasTrained;
+    public bool hasTrained;
     int poopCount;
     [SerializeField] GameObject poop;
     [SerializeField] Transform poopParent;
     [SerializeField] float spawnRadio;
 
+    [SerializeField] private FMODUnity.EventReference _managerMusic;
+
+    [SerializeField] private Animator _speedAnimator;
+    [SerializeField] private Animator _eatAnimator;
+    [SerializeField] private Animator _drinkAnimator;
+
+    [SerializeField] private FMODUnity.EventReference _speedEvent;
+    [SerializeField] private FMODUnity.EventReference _eatEvent;
+    [SerializeField] private FMODUnity.EventReference _drinkEvent;
+
+    [SerializeField] private FMODUnity.EventReference _upgradeEvent;
+
+    private FMOD.Studio.EventInstance _upgradeLifeInstance;
+    private FMOD.Studio.EventInstance _upgradeSpeedInstance;
+
+    private bool _doingStuff;
+
+    private FMOD.Studio.EventInstance _musicInstance;
+
     public int CurrentCurrency => currentCurrency;
+
+    public void PlayManagerMusic()
+    {
+        _musicInstance.start();
+        Debug.Log("musica");
+    }
+
+    public void StopManagerMusic()
+    {
+        _musicInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+    }
 
     private void Start()
     {
+        _musicInstance = FMODUnity.RuntimeManager.CreateInstance(_managerMusic);
+
+        _upgradeLifeInstance = FMODUnity.RuntimeManager.CreateInstance(_upgradeEvent);
+        _upgradeSpeedInstance = FMODUnity.RuntimeManager.CreateInstance(_upgradeEvent);
 
         if (PlayerPrefs.HasKey("Currency"))
         {
@@ -62,6 +96,8 @@ public class StatsController : SingletonBehaviour<StatsController>
 
             InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
             InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
+
+            PlayManagerMusic();
         }
         else
         {
@@ -72,6 +108,7 @@ public class StatsController : SingletonBehaviour<StatsController>
             PlayerPrefs.SetFloat("Hungry", hungry);
             PlayerPrefs.SetFloat("Thirst", thirst);
             PlayerPrefs.SetInt("Dirty", currentDirty);
+            PlayerPrefs.SetInt("Currency", currentCurrency);
 
             SetLife(true);
             SetSpeed(true);
@@ -112,6 +149,37 @@ public class StatsController : SingletonBehaviour<StatsController>
     public void DrinkWater(float statsQuantity)
     {
         if (thirst == maxThirst) return;
+
+        _doingStuff = true;
+        PlayerController.Instance.Dissapear();
+        ActiveDesactiveButtons();
+        StartCoroutine(Drink(statsQuantity));
+    }
+
+    private IEnumerator Drink(float statsQuantity)
+    {
+        var fmodEvent = FMODUnity.RuntimeManager.CreateInstance(_drinkEvent);
+
+        fmodEvent.start();
+
+        FMOD.Studio.PLAYBACK_STATE state;
+
+        _drinkAnimator.Play("Active");
+
+        fmodEvent.getPlaybackState(out state);
+
+        while (state == FMOD.Studio.PLAYBACK_STATE.PLAYING ||
+                state == FMOD.Studio.PLAYBACK_STATE.STARTING)
+        {
+            yield return null;
+            fmodEvent.getPlaybackState(out state);
+        }
+
+        _drinkAnimator.Play("Idle");
+
+        _doingStuff = false;
+        PlayerController.Instance.Reappear();
+
         thirst = Mathf.Min(thirst + statsQuantity, maxThirst);
         InterfaceController.Instance.UpdateThirst(thirst);
         currentCurrency -= waterPrice;
@@ -124,12 +192,43 @@ public class StatsController : SingletonBehaviour<StatsController>
     public void EatFood(float statsQuantity)
     {
         if (hungry == maxHungry) return;
+
+        _doingStuff = true;
+        ActiveDesactiveButtons();
+        PlayerController.Instance.Dissapear();
+        StartCoroutine(Eat(statsQuantity));
+    }
+
+    private IEnumerator Eat(float statsQuantity)
+    {
+        var fmodEvent = FMODUnity.RuntimeManager.CreateInstance(_eatEvent);
+
+        fmodEvent.start();
+
+        FMOD.Studio.PLAYBACK_STATE state;
+
+        _eatAnimator.Play("Active");
+
+        fmodEvent.getPlaybackState(out state);
+
+        while (state == FMOD.Studio.PLAYBACK_STATE.PLAYING ||
+                state == FMOD.Studio.PLAYBACK_STATE.STARTING)
+        {
+            yield return null;
+            fmodEvent.getPlaybackState(out state);
+        }
+
+        _eatAnimator.Play("Idle");
+
+        _doingStuff = false;
+        PlayerController.Instance.Reappear();
+
         hungry = Mathf.Min(hungry + statsQuantity, maxHungry);
         InterfaceController.Instance.UpdateHungry(hungry);
         currentCurrency -= foodPrice;
         InterfaceController.Instance.UpdateManagerCurrency(currentCurrency);
         ActiveDesactiveButtons();
-        PlayerPrefs.SetFloat("Hungry", hungry);
+        PlayerPrefs.SetFloat("Hungry", thirst);
         PlayerPrefs.SetInt("Currency", currentCurrency);
     }
 
@@ -155,6 +254,11 @@ public class StatsController : SingletonBehaviour<StatsController>
         }
         else
         {
+            if (speedUpgradeIndex > 0)
+            {
+                _upgradeSpeedInstance.setParameterByName("UpgradeState", speedUpgradeIndex);
+            }
+            _upgradeSpeedInstance.start();
             speedUpgradeIndex++;
             InterfaceController.Instance.UpdateSpeedPrice(speedUpgradePrices[speedUpgradeIndex]);
         }
@@ -182,6 +286,11 @@ public class StatsController : SingletonBehaviour<StatsController>
         }
         else
         {
+            if (lifeUpgradeIndex > 0)
+            {
+                _upgradeLifeInstance.setParameterByName("UpgradeState", lifeUpgradeIndex);
+            }
+            _upgradeLifeInstance.start();
             lifeUpgradeIndex++;
             InterfaceController.Instance.UpdateLifePrice(lifeUpgradePrices[lifeUpgradeIndex]);
         }
@@ -199,9 +308,42 @@ public class StatsController : SingletonBehaviour<StatsController>
 
     public void Practice()
     {
+        if (hasTrained) return;
+
+        _doingStuff = true;
+        ActiveDesactiveButtons();
+        StartCoroutine(PracticeRoutine());
+    }
+
+    private IEnumerator PracticeRoutine()
+    {
+        var fmodEvent = FMODUnity.RuntimeManager.CreateInstance(_speedEvent);
+
+        fmodEvent.start();
+
+        FMOD.Studio.PLAYBACK_STATE state;
+
+        _speedAnimator.Play("Active");
+
+        fmodEvent.getPlaybackState(out state);
+
+        while (state == FMOD.Studio.PLAYBACK_STATE.PLAYING ||
+                state == FMOD.Studio.PLAYBACK_STATE.STARTING)
+        {
+            yield return null;
+            fmodEvent.getPlaybackState(out state);
+        }
+
+        _speedAnimator.Play("Idle");
+
+        _doingStuff = false;
+        PlayerController.Instance.Reappear();
+
         CurrencyGain(Random.Range(3, 5));
         hasTrained = true;
         practiceBtn.interactable = false;
+
+        ActiveDesactiveButtons();
     }
 
     public void SpawnPoop()
@@ -243,11 +385,14 @@ public class StatsController : SingletonBehaviour<StatsController>
     #region UI Control
     public void ActiveDesactiveButtons()
     {
-        if (currentCurrency < waterPrice || thirst == maxThirst) waterBtn.interactable = false;
+        if (currentCurrency < waterPrice || thirst == maxThirst || _doingStuff) waterBtn.interactable = false;
         else waterBtn.interactable = true;
 
-        if (currentCurrency < foodPrice || hungry == maxHungry) foodBtn.interactable = false;
+        if (currentCurrency < foodPrice || hungry == maxHungry || _doingStuff) foodBtn.interactable = false;
         else foodBtn.interactable = true;
+
+        if (_doingStuff) practiceBtn.interactable = false;
+        else practiceBtn.interactable = !hasTrained;
     }
 
     public void SwitchAllManagerBtnsActivation()

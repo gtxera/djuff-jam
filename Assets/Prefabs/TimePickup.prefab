@@ -126,6 +126,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4342bdaed3f43a44e818a61c71c679e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _pickupSound:
+    Guid:
+      Data1: 1203429900
+      Data2: 1239208415
+      Data3: 1111422603
+      Data4: -1220367646
+    Path: event:/SFX/Runner/Clock
 --- !u!58 &-895497940815914740
 CircleCollider2D:
   m_ObjectHideFlags: 0
