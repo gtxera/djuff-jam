@@ -45,6 +45,8 @@ public class PlayerController : SingletonBehaviour<PlayerController>
         playerSprite.gameObject.SetActive(false);
 
         hamsterAnim.speed = 0f;
+
+        StopCoroutine(ChangeAnimation());
     }
 
     public void Reappear()
@@ -52,6 +54,12 @@ public class PlayerController : SingletonBehaviour<PlayerController>
         playerSprite.gameObject.SetActive(true);
 
         hamsterAnim.speed = 1f;
+
+        StartCoroutine(ChangeAnimation());
+
+        eyesIndex = 0;
+
+        eyes[eyesIndex].SetActive(true);
     }
 
     IEnumerator ChangeAnimation()
@@ -63,13 +71,19 @@ public class PlayerController : SingletonBehaviour<PlayerController>
                 {
                     yield return new WaitForSeconds(1f);
                 }
+                var lastAnimName = hamsterAnim.GetCurrentAnimatorClipInfo(0)[0].clip.name;
+                Debug.Log(lastAnimName);
                 hamsterAnim.SetTrigger("ChangePose");
                 for (int i = 0; i < eyes.Length; i++)
                 {
                     eyes[i].SetActive(false);
                 }
+                yield return new WaitUntil(() => 
+                {
+                    var animatorState = hamsterAnim.GetCurrentAnimatorStateInfo(0);
+                    return !animatorState.IsName(lastAnimName) && !animatorState.IsName("Idle2") && !animatorState.IsName("Idle2 0");
+                });
                 eyesIndex++;
-                yield return new WaitForSeconds(.5f);
                 if(eyes.Length < eyesIndex + 1)
                 {
                     eyesIndex = 0;

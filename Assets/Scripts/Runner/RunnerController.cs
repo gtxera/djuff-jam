@@ -29,7 +29,7 @@ public class RunnerController : MonoBehaviour
         RunnerManager.Instance.RunnerStarted += OnRunnerStarted;
         RunnerManager.Instance.RunnerGameOver += OnRunnerEnded;
         RunnerManager.Instance.RunnerWin += OnRunnerWin;
-        _sprite.color = PlayerController.Instance.playerSprite.color;
+        _sprite.material.color = PlayerController.Instance.playerSprite.color;
         _running = true;
         _initialPosition = _rb2d.position;
     }

@@ -49,7 +49,11 @@ public class PassiveParallax : MonoBehaviour
 
         rb.velocity = velocity;
 
-        if (rb.position.x > startPos + length)
+        if (rb.position.x > startPos + length && !_running)
+        {
+            rb.MovePosition(new Vector2(startPos, transform.position.y));
+        }
+        else if (rb.position.x < startPos - length && _running)
         {
             rb.MovePosition(new Vector2(startPos, transform.position.y));
         }

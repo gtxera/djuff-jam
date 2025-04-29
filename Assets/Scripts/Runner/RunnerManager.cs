@@ -200,8 +200,8 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         _distortionRoot.transform.localScale = Vector3.one;
 
         StatsController.Instance.SpawnPoop();
-        StatsController.Instance.thirst *= 0.75f;
-        StatsController.Instance.hungry *= 0.75f;
+        StatsController.Instance.thirst -= StatsController.Instance.thirst * 0.50f;
+        StatsController.Instance.hungry -= StatsController.Instance.hungry * 0.50f;
         PlayerPrefs.SetFloat("Thirst", StatsController.Instance.thirst);
         PlayerPrefs.SetFloat("Hungry", StatsController.Instance.hungry);
         InterfaceController.Instance.UpdateThirst(StatsController.Instance.thirst);
@@ -267,8 +267,6 @@ public class RunnerManager : SingletonBehaviour<RunnerManager>
         }
 
         InterfaceController.Instance.UpdateGameTime(_remaningTime);
-
-        Debug.Log(Velocity);
 
         if (Velocity >= _victoryVelocity)
         {
